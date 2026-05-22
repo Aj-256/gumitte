@@ -1,0 +1,7 @@
+{
+  "name": "gumite/downloader",
+  "description": "Gumite Media Downloader",
+  "require": {
+    "php": ">=8.0"
+  }
+}

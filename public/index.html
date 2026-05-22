@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gumite Downloader - Free Media Downloader for 8+ Platforms</title>
+    <meta name="description" content="Download videos and audio from YouTube, TikTok, Instagram, Twitter, Facebook, Spotify, Likee, and Threads for free">
+    <meta name="theme-color" content="#7C3AED">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #111827 0%, #4C1D95 50%, #111827 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 1rem;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .gradient-button {
+            background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.4);
+        }
+        
+        .platform-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .platform-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .platform-btn.active {
+            background: linear-gradient(135deg, #A855F7 0%, #EC4899 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+        }
+        
+        .modal {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #A855F7, #EC4899); border-radius: 10px; }
+        
+        /* Video player styles */
+        .video-container {
+            position: relative;
+            background: black;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-container:hover .video-controls {
+            opacity: 1;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 4px;
+            background: #4b5563;
+            border-radius: 5px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #A855F7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen py-8 px-4">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-6xl font-bold mb-4">
+                    <span class="gradient-text">Gumite Downloader</span>
+                </h1>
+                <p class="text-gray-300 text-lg max-w-2xl mx-auto">
+                    Download videos and audio from 8+ platforms for free. Fast, secure, and unlimited downloads.
+                </p>
+            </div>
+
+            <!-- Main Download Card -->
+            <div class="glass-card p-6 md:p-8 mb-12">
+                <!-- Platform Selector -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 mb-3 font-semibold">Select Platform</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="platformSelector">
+                        <button data-platform="youtube" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700 active">
+                            <i class="fab fa-youtube text-red-500"></i>
+                            <span>YouTube</span>
+                        </button>
+                        <button data-platform="tiktok" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-tiktok"></i>
+                            <span>TikTok</span>
+                        </button>
+                        <button data-platform="instagram" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-instagram text-pink-500"></i>
+                            <span>Instagram</span>
+                        </button>
+                        <button data-platform="twitter" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-twitter text-blue-400"></i>
+                            <span>Twitter</span>
+                        </button>
+                        <button data-platform="facebook" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-facebook text-blue-600"></i>
+                            <span>Facebook</span>
+                        </button>
+                        <button data-platform="spotify" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-spotify text-green-500"></i>
+                            <span>Spotify</span>
+                        </button>
+                        <button data-platform="likee" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fas fa-heart text-red-500"></i>
+                            <span>Likee</span>
+                        </button>
+                        <button data-platform="threads" class="platform-btn flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gray-800/50 border border-gray-700 text-gray-300 hover:bg-gray-700">
+                            <i class="fab fa-twitter"></i>
+                            <span>Threads</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- URL Input -->
+                <div class="mb-6">
+                    <label class="block text-gray-300 mb-2 font-semibold">Media URL</label>
+                    <input type="text" id="urlInput" placeholder="https://youtube.com/watch?v=..." class="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors">
+                </div>
+
+                <!-- Format Selection -->
+                <div class="mb-6" id="formatSelector">
+                    <label class="block text-gray-300 mb-2 font-semibold">Format</label>
+                    <div class="flex gap-4">
+                        <button id="videoBtn" class="px-6 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white">Video</button>
+                        <button id="audioBtn" class="px-6 py-2 rounded-lg font-semibold transition-all bg-gray-700 text-gray-300 hover:bg-gray-600">Audio</button>
+                    </div>
+                </div>
+
+                <!-- Quality Selector (YouTube only) -->
+                <div class="mb-6" id="qualitySelector" style="display: none;">
+                    <label class="block text-gray-300 mb-2 font-semibold">Quality</label>
+                    <select id="qualitySelect" class="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-purple-500">
+                        <option value="360p">360p (Low)</option>
+                        <option value="720p" selected>720p (HD)</option>
+                        <option value="1080p">1080p (Full HD)</option>
+                    </select>
+                </div>
+
+                <!-- Download Button -->
+                <button id="downloadBtn" class="w-full gradient-button py-4 text-lg font-semibold rounded-xl text-white">
+                    Download Now
+                </button>
+            </div>
+
+            <!-- Stats Counter -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                    <div class="inline-flex p-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 mb-4">
+                        <i class="fas fa-bolt text-white text-2xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">100%</div>
+                    <div class="text-gray-400 text-sm">Lightning Speed</div>
+                </div>
+                <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                    <div class="inline-flex p-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 mb-4">
+                        <i class="fas fa-shield-alt text-white text-2xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">100%</div>
+                    <div class="text-gray-400 text-sm">Safe Downloads</div>
+                </div>
+                <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                    <div class="inline-flex p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 mb-4">
+                        <i class="fas fa-infinity text-white text-2xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">Unlimited</div>
+                    <div class="text-gray-400 text-sm">No Limits</div>
+                </div>
+                <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                    <div class="inline-flex p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 mb-4">
+                        <i class="fas fa-gift text-white text-2xl"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-white mb-1">100%</div>
+                    <div class="text-gray-400 text-sm">Free</div>
+                </div>
+            </div>
+
+            <!-- Developers Section -->
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8">
+                    <span class="gradient-text">Meet Our Developers</span>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                        <img src="https://vero-upload.zone.id/files/1767101841497_drj4iscx09i.jpg" alt="AJ" class="w-32 h-32 rounded-full object-cover border-4 border-purple-500 mx-auto mb-4 group-hover:border-pink-500 transition-colors">
+                        <h3 class="text-xl font-bold text-white mb-1">AJ</h3>
+                        <p class="text-purple-400 mb-3">Frontend Developer</p>
+                        <a href="https://github.com/Aj-256" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                    </div>
+                    <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                        <img src="https://vero-upload.zone.id/files/1777801753260_hdk8su5qu15.jpg" alt="Riddi-t" class="w-32 h-32 rounded-full object-cover border-4 border-purple-500 mx-auto mb-4 group-hover:border-pink-500 transition-colors">
+                        <h3 class="text-xl font-bold text-white mb-1">Riddi-t</h3>
+                        <p class="text-purple-400 mb-3">Backend Developer</p>
+                        <a href="https://github.com/Riddi-t" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                    </div>
+                    <div class="glass-card p-6 text-center group hover:scale-105 transition-transform">
+                        <img src="https://vero-upload.zone.id/files/1767101870259_e83xwscyhgb.png" alt="Uthuman" class="w-32 h-32 rounded-full object-cover border-4 border-purple-500 mx-auto mb-4 group-hover:border-pink-500 transition-colors">
+                        <h3 class="text-xl font-bold text-white mb-1">Uthuman</h3>
+                        <p class="text-purple-400 mb-3">API Integration</p>
+                        <a href="https://github.com/what-sapp" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8">
+                    <span class="gradient-text">Frequently Asked Questions</span>
+                </h2>
+                <div class="max-w-3xl mx-auto space-y-4">
+                    <div class="glass-card overflow-hidden">
+                        <button onclick="toggleFAQ(0)" class="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-gray-800/30 transition-colors">
+                            <span class="text-white font-semibold">Is Gumite Downloader free to use?</span>
+                            <i id="faq-icon-0" class="fas fa-chevron-down text-gray-400"></i>
+                        </button>
+                        <div id="faq-0" class="px-6 pb-4 hidden">
+                            <p class="text-gray-300">Yes! Gumite Downloader is completely free to use. There are no hidden fees, subscriptions, or credit card requirements.</p>
+                        </div>
+                    </div>
+                    <div class="glass-card overflow-hidden">
+                        <button onclick="toggleFAQ(1)" class="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-gray-800/30 transition-colors">
+                            <span class="text-white font-semibold">Do I need to register?</span>
+                            <i id="faq-icon-1" class="fas fa-chevron-down text-gray-400"></i>
+                        </button>
+                        <div id="faq-1" class="px-6 pb-4 hidden">
+                            <p class="text-gray-300">No registration required! You can start downloading immediately without creating an account.</p>
+                        </div>
+                    </div>
+                    <div class="glass-card overflow-hidden">
+                        <button onclick="toggleFAQ(2)" class="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-gray-800/30 transition-colors">
+                            <span class="text-white font-semibold">What platforms are supported?</span>
+                            <i id="faq-icon-2" class="fas fa-chevron-down text-gray-400"></i>
+                        </button>
+                        <div id="faq-2" class="px-6 pb-4 hidden">
+                            <p class="text-gray-300">We support 8 major platforms: YouTube, TikTok, Instagram, Twitter, Facebook, Spotify, Likee, and Threads.</p>
+                        </div>
+                    </div>
+                    <div class="glass-card overflow-hidden">
+                        <button onclick="toggleFAQ(3)" class="w-full px-6 py-4 flex justify-between items-center text-left hover:bg-gray-800/30 transition-colors">
+                            <span class="text-white font-semibold">Is it safe to use?</span>
+                            <i id="faq-icon-3" class="fas fa-chevron-down text-gray-400"></i>
+                        </button>
+                        <div id="faq-3" class="px-6 pb-4 hidden">
+                            <p class="text-gray-300">Absolutely! We use secure API connections and never store your files. Your privacy is our top priority.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900/50 border-t border-gray-800 mt-12">
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <div class="text-center">
+                <p class="text-gray-400 text-sm flex items-center justify-center gap-1">
+                    Made with <i class="fas fa-heart text-pink-500"></i> by AJ, Riddi-t & Uthuman
+                </p>
+                <p class="text-gray-500 text-xs mt-2">© 2024 Gumite Downloader. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md" onclick="closeModal(event)">
+        <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4 modal-content">
+            <div class="glass-card" id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlatform = 'youtube';
+        let currentFormat = 'video';
+        let currentQuality = '720p';
+        let isLoading = false;
+
+        // Platform detection
+        const platformPatterns = {
+            youtube: /(youtube\.com|youtu\.be)/,
+            tiktok: /tiktok\.com/,
+            instagram: /instagram\.com/,
+            twitter: /twitter\.com|x\.com/,
+            facebook: /facebook\.com|fb\.com/,
+            spotify: /spotify\.com/,
+            likee: /likee\.com|likee\.video/,
+            threads: /threads\.net/
+        };
+
+        // DOM elements
+        const urlInput = document.getElementById('urlInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const videoBtn = document.getElementById('videoBtn');
+        const audioBtn = document.getElementById('audioBtn');
+        const qualitySelector = document.getElementById('qualitySelector');
+        const qualitySelect = document.getElementById('qualitySelect');
+
+        // Platform selection
+        document.querySelectorAll('.platform-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPlatform = btn.dataset.platform;
+                updatePlaceholder();
+                updateFormatOptions();
+            });
+        });
+
+        // URL detection
+        urlInput.addEventListener('input', () => {
+            const url = urlInput.value;
+            for (const [platform, pattern] of Object.entries(platformPatterns)) {
+                if (pattern.test(url)) {
+                    document.querySelectorAll('.platform-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.platform === platform) {
+                            btn.classList.add('active');
+                            currentPlatform = platform;
+                            updateFormatOptions();
+                        }
+                    });
+                    break;
+                }
+            }
+        });
+
+        // Format selection
+        videoBtn.addEventListener('click', () => {
+            currentFormat = 'video';
+            videoBtn.className = 'px-6 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white';
+            audioBtn.className = 'px-6 py-2 rounded-lg font-semibold transition-all bg-gray-700 text-gray-300 hover:bg-gray-600';
+            updateQualitySelector();
+        });
+
+        audioBtn.addEventListener('click', () => {
+            currentFormat = 'audio';
+            audioBtn.className = 'px-6 py-2 rounded-lg font-semibold transition-all bg-gradient-to-r from-purple-600 to-pink-600 text-white';
+            videoBtn.className = 'px-6 py-2 rounded-lg font-semibold transition-all bg-gray-700 text-gray-300 hover:bg-gray-600';
+            updateQualitySelector();
+        });
+
+        qualitySelect.addEventListener('change', (e) => {
+            currentQuality = e.target.value;
+        });
+
+        function updatePlaceholder() {
+            const placeholders = {
+                youtube: 'https://youtube.com/watch?v=...',
+                tiktok: 'https://tiktok.com/@username/video/...',
+                instagram: 'https://instagram.com/p/...',
+                twitter: 'https://twitter.com/user/status/...',
+                facebook: 'https://facebook.com/watch?v=...',
+                spotify: 'https://open.spotify.com/track/...',
+                likee: 'https://likee.com/video/...',
+                threads: 'https://threads.net/@user/post/...'
+            };
+            urlInput.placeholder = placeholders[currentPlatform] || 'Paste your URL here...';
+        }
+
+        function updateFormatOptions() {
+            const supportsVideo = !['spotify'].includes(currentPlatform);
+            const supportsAudio = ['youtube', 'tiktok', 'spotify'].includes(currentPlatform);
+            
+            if (!supportsVideo) {
+                currentFormat = 'audio';
+                videoBtn.disabled = true;
+                audioBtn.click();
+            } else if (!supportsAudio) {
+                currentFormat = 'video';
+                audioBtn.disabled = true;
+                videoBtn.click();
+            } else {
+                videoBtn.disabled = false;
+                audioBtn.disabled = false;
+            }
+            
+            updateQualitySelector();
+        }
+
+        function updateQualitySelector() {
+            if (currentPlatform === 'youtube' && currentFormat === 'video') {
+                qualitySelector.style.display = 'block';
+            } else {
+                qualitySelector.style.display = 'none';
+            }
+        }
+
+        // Download handler
+        downloadBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showToast('Please enter a URL', 'error');
+                return;
+            }
+
+            if (isLoading) return;
+            isLoading = true;
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<div class="spinner mx-auto"></div>';
+
+            try {
+                let apiUrl = `/api/download/${currentPlatform}.php?url=${encodeURIComponent(url)}`;
+                if (currentPlatform === 'youtube' && currentFormat === 'video') {
+                    apiUrl += `&format=${currentQuality}`;
+                } else if (currentPlatform === 'youtube' && currentFormat === 'audio') {
+                    apiUrl += `&format=audio`;
+                }
+
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (!data.success) throw new Error(data.error || 'Download failed');
+
+                // Upload to tmpfiles
+                const filename = `${sanitizeFilename(data.title || 'media')}_${currentPlatform}_gumite.${data.type === 'video' ? 'mp4' : 'mp3'}`;
+                const tmpResponse = await fetch('/api/upload-to-tmp.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileUrl: data.download_url, filename })
+                });
+                const tmpData = await tmpResponse.json();
+
+                if (!tmpData.success) throw new Error('Upload failed');
+
+                showPreviewModal({
+                    mediaUrl: tmpData.url,
+                    title: data.title,
+                    type: data.type,
+                    platform: currentPlatform,
+                    thumbnail: data.thumbnail,
+                    author: data.author,
+                    description: data.description,
+                    likes: data.likes,
+                    comments: data.comments
+                });
+
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                isLoading = false;
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = 'Download Now';
+            }
+        });
+
+        function sanitizeFilename(filename) {
+            return filename.replace(/[^\w\s-]/gi, '').replace(/\s+/g, '_').substring(0, 100);
+        }
+
+        function showPreviewModal(data) {
+            const modal = document.getElementById('previewModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            let playerHtml = '';
+            if (data.type === 'video') {
+                playerHtml = `
+                    <div class="video-container">
+                        <video id="previewVideo" class="w-full" controls>
+                            <source src="${data.mediaUrl}" type="video/mp4">
+                        </video>
+                    </div>
+                `;
+            } else {
+                playerHtml = `
+                    <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-6">
+                        <audio id="previewAudio" controls class="w-full">
+                            <source src="${data.mediaUrl}" type="audio/mpeg">
+                        </audio>
+                    </div>
+                `;
+            }
+
+            modalContent.innerHTML = `
+                <div class="sticky top-0 z-10 flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800/90 backdrop-blur-md rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs px-2 py-1 bg-purple-600/30 text-purple-300 rounded-full capitalize">${data.platform}</span>
+                        <span class="text-xs px-2 py-1 bg-pink-600/30 text-pink-300 rounded-full uppercase">${data.type}</span>
+                    </div>
+                    <button onclick="closeModal()" class="p-2 hover:bg-gray-700 rounded-full transition-colors">
+                        <i class="fas fa-times text-white"></i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-white mb-4">${escapeHtml(data.title) || 'Untitled Media'}</h2>
+                    ${data.author ? `<div class="flex items-center gap-2 mb-4 text-gray-300"><i class="fas fa-user"></i><span class="text-sm">${escapeHtml(data.author)}</span></div>` : ''}
+                    <div class="mb-6">${playerHtml}</div>
+                    ${data.description ? `<div class="mb-4 p-4 bg-gray-900/50 rounded-lg"><p class="text-gray-300 text-sm">${escapeHtml(data.description)}</p></div>` : ''}
+                    ${data.likes || data.comments ? `<div class="flex gap-6 mb-4"><div class="flex items-center gap-2 text-pink-400"><i class="fas fa-heart"></i><span>${data.likes || 0}</span></div><div class="flex items-center gap-2 text-blue-400"><i class="fas fa-comment"></i><span>${data.comments || 0}</span></div></div>` : ''}
+                    <button onclick="downloadFromModal('${data.mediaUrl}', '${escapeHtml(data.title)}', '${data.platform}', '${data.type}')" class="w-full gradient-button py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i> Download Now
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        window.downloadFromModal = (url, title, platform, type) => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${sanitizeFilename(title)}_${platform}_gumite.${type === 'video' ? 'mp4' : 'mp3'}`;
+            link.click();
+            closeModal();
+        };
+
+        window.closeModal = (event) => {
+            if (!event || event.target === document.getElementById('previewModal')) {
+                document.getElementById('previewModal').classList.add('hidden');
+                document.getElementById('previewModal').classList.remove('flex');
+            }
+        };
+
+        window.toggleFAQ = (index) => {
+            const content = document.getElementById(`faq-${index}`);
+            const icon = document.getElementById(`faq-icon-${index}`);
+            content.classList.toggle('hidden');
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        };
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 glass-card p-4 flex items-center gap-3 animate-slide-up`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-${type === 'error' ? 'red' : 'green'}-400"></i>
+                <p class="text-white text-sm">${message}</p>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        updatePlaceholder();
+        updateFormatOptions();
+    </script>
+</body>
+</html>
